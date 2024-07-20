@@ -38,6 +38,5 @@ defmodule ExAssignment.RecommendationETS do
   """
   def clear do
     :ets.delete_all_objects(@table_name)
-    IO.puts("Cleared ETS table: #{@table_name}")
   end
 end
