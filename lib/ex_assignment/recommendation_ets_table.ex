@@ -28,7 +28,7 @@ defmodule ExAssignment.RecommendationETS do
   @doc """
   Gets a todo from the recommendation ETS table.
   """
-  def get() do
+  def get do
     :ets.lookup(@table_name, :recommended_todo)
     |> Enum.map(fn {_, value} -> value end)
   end
