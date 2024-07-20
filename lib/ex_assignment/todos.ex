@@ -48,7 +48,7 @@ defmodule ExAssignment.Todos do
     list_todos(:open)
     |> case do
       [] -> nil
-      todos -> Enum.take_random(todos, 1) |> List.first()
+      todos -> Enum.take(todos, 1) |> List.first()
     end
   end
 

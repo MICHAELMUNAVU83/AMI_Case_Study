@@ -59,5 +59,18 @@ defmodule ExAssignment.TodosTest do
       todo = todo_fixture()
       assert %Ecto.Changeset{} = Todos.change_todo(todo)
     end
+
+    test "get_recommended/1 returns a todo with the highest urgency , this todo will have the lowest priority" do
+      todo = todo_fixture()
+
+      lower_priority_todo_attrs =  %{done: false , priority: 42, title: "some title"}
+      higher_priority_todo_attrs =  %{done: false , priority: 41, title: "some title"}
+
+      {:ok, %Todo{} = lower_priority_todo} = Todos.create_todo(lower_priority_todo_attrs)
+      {:ok, %Todo{} = higher_priority_todo} = Todos.create_todo(higher_priority_todo_attrs)
+
+
+      assert Todos.get_recommended() == higher_priority_todo
+    end
   end
 end
