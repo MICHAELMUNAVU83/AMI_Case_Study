@@ -41,15 +41,33 @@ defmodule ExAssignment.Todos do
 
   @doc """
   Returns the next todo that is recommended to be done by the system.
+  We group the open todos by priority and then select a random todo from the
+  highest priority group.
 
   ASSIGNMENT: ...
   """
   def get_recommended() do
-    list_todos(:open)
-    |> case do
+    open_todos =
+      list_todos(:open)
+      |> Enum.group_by(& &1.priority)
+
+    case Map.keys(open_todos) do
       [] -> nil
-      todos -> Enum.take(todos, 1) |> List.first()
+      _ -> get_random_todo_of_highest_urgency(open_todos)
     end
+  end
+
+  def get_random_todo_of_highest_urgency(pending_todos) do
+    highest_urgency = get_highest_urgency(pending_todos)
+
+    Map.get(pending_todos, highest_urgency)
+    |> Enum.random()
+  end
+
+  defp get_highest_urgency(pending_todos) do
+    pending_todos
+    |> Map.keys()
+    |> Enum.min()
   end
 
   @doc """

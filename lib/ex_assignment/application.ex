@@ -4,6 +4,7 @@ defmodule ExAssignment.Application do
   @moduledoc false
 
   use Application
+  alias ExAssignment.RecommendationETS
 
   @impl true
   def start(_type, _args) do
@@ -12,6 +13,7 @@ defmodule ExAssignment.Application do
       ExAssignmentWeb.Telemetry,
       # Start the Ecto repository
       ExAssignment.Repo,
+
       # Start the PubSub system
       {Phoenix.PubSub, name: ExAssignment.PubSub},
       # Start the Endpoint (http/https)
@@ -19,6 +21,8 @@ defmodule ExAssignment.Application do
       # Start a worker by calling: ExAssignment.Worker.start_link(arg)
       # {ExAssignment.Worker, arg}
     ]
+
+    RecommendationETS.init()
 
     # See https://hexdocs.pm/elixir/Supervisor.html
     # for other strategies and supported options
