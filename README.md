@@ -32,6 +32,12 @@ A small Elixir/Phoenix assignment for the [AMI](https://www.africanmanagers.org/
 
 ## Video Demo
 
+
+https://github.com/user-attachments/assets/9d208f40-b0b5-4714-8bae-cd7a545a110b
+
+
+
+
 ## Testing
 
 - I added Unit Tests for the `ExAssignment.RecommendationETS` module in the `test/ex_assignment/recommendation_ets_table_test.exs` file.
