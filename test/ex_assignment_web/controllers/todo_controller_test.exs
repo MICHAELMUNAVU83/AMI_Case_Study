@@ -3,14 +3,14 @@ defmodule ExAssignmentWeb.TodoControllerTest do
   alias ExAssignment.Todos
   alias ExAssignment.Todos.Todo
 
-  describe "GET /todos" do
-    test "renders the todos page", %{conn: conn} do
+  describe "Todos Integration Tests" do
+    test "/todos renders the todos page", %{conn: conn} do
       conn = get(conn, "/todos")
       response = html_response(conn, 200)
       assert response =~ "Todos"
     end
 
-    test "if there are no todos , you see the text 'Nothing to do'", %{conn: conn} do
+    test "if there are no todos , you see the text 'Nothing to do' on /todos", %{conn: conn} do
       conn = get(conn, "/todos")
 
       response = html_response(conn, 200)
@@ -18,7 +18,7 @@ defmodule ExAssignmentWeb.TodoControllerTest do
       assert response =~ "Nothing to do"
     end
 
-    test "if there are  todos , you see them on this page", %{conn: conn} do
+    test "if there are  todos , you see them on the /todos page", %{conn: conn} do
       todos = create_todos()
       conn = get(conn, "/todos")
 
@@ -32,7 +32,7 @@ defmodule ExAssignmentWeb.TodoControllerTest do
       assert response =~ todos.third_todo.title
     end
 
-    test "Open Todos are in the Open Section", %{conn: conn} do
+    test "Open Todos are in the Open Section on the /todos page", %{conn: conn} do
       # Open todos are those that are not done , they have an id that has the prefix "open-todo-"
       todos = create_todos()
       conn = get(conn, "/todos")
@@ -45,7 +45,7 @@ defmodule ExAssignmentWeb.TodoControllerTest do
       assert Floki.find(parsed_html, "#open-todo-#{todos.third_todo.id}") == []
     end
 
-    test "Completed Todos are in the Completed Section", %{conn: conn} do
+    test "Completed Todos are in the Completed Section on the /todos page", %{conn: conn} do
       # Completed todos are those that are done , they have an id that has the prefix "completed-todo-"
       todos = create_todos()
       conn = get(conn, "/todos")
@@ -58,9 +58,10 @@ defmodule ExAssignmentWeb.TodoControllerTest do
       assert Floki.find(parsed_html, "#completed-todo-#{todos.third_todo.id}") != []
     end
 
-    test "The Recommended todo is selected randomly between the ones with the highest urgency", %{
-      conn: conn
-    } do
+    test "The Recommended todo is selected randomly between the ones with the highest urgency and seen on /todos",
+         %{
+           conn: conn
+         } do
       # The recommended todo is the one with the highest urgency , this todo will have the lowest priority and has the id
       # "recommended-todo-"
       todos = create_todos()
@@ -75,9 +76,10 @@ defmodule ExAssignmentWeb.TodoControllerTest do
       assert Floki.find(parsed_html, "#recommended-todo-#{todos.second_todo.id}") == []
     end
 
-    test "After We visit the todo page again , the recommended todo is persisted", %{
-      conn: conn
-    } do
+    test "After We visit the todo page again , the recommended todo is persisted on the /todos page",
+         %{
+           conn: conn
+         } do
       # The recommended todo is the one with the highest urgency , this todo will have the lowest priority and has the id
       # "recommended-todo-"
       todos = create_todos()
@@ -102,31 +104,80 @@ defmodule ExAssignmentWeb.TodoControllerTest do
       assert Floki.find(parsed_html, "#recommended-todo-#{todos.second_todo.id}") == []
     end
 
-    test "After We visit the todo page again , the recommended todo is persisted", %{
+    test "After We Add A New Todo , we can see it on the todos page", %{
       conn: conn
     } do
-      # The recommended todo is the one with the highest urgency , this todo will have the lowest priority and has the id
-      # "recommended-todo-"
+      conn = post(conn, ~p"/todos", todo: %{done: false, priority: 3, title: "New todo"})
+
+      conn = get(conn, "/todos")
+
+      assert html_response(conn, 200) =~ "New todo"
+    end
+
+    test "Once We Check a Todo , it moves to the Completed Section", %{
+      conn: conn
+    } do
+      # Open todos are those that are not done , they have an id that has the prefix "open-todo-"
       todos = create_todos()
       conn = get(conn, "/todos")
       response = html_response(conn, 200)
 
       {:ok, parsed_html} = Floki.parse_document(response)
 
-      # in this case the first todo has the highest urgency
+      assert Floki.find(parsed_html, "#open-todo-#{todos.first_todo.id}") != []
+      assert Floki.find(parsed_html, "#open-todo-#{todos.second_todo.id}") != []
 
-      assert Floki.find(parsed_html, "#recommended-todo-#{todos.first_todo.id}") != []
-      assert Floki.find(parsed_html, "#recommended-todo-#{todos.second_todo.id}") == []
+      # we now check an open todo
 
-      refreshed_conn = get(conn, "/todos")
-      response = html_response(refreshed_conn, 200)
+      conn = put(conn, ~p"/todos/#{todos.first_todo.id}/check")
+
+      conn = get(conn, "/todos")
+      response = html_response(conn, 200)
+
+      {:ok, parsed_html} = Floki.parse_document(response)
+      refute Floki.find(parsed_html, "#open-todo-#{todos.first_todo.id}") != []
+      assert Floki.find(parsed_html, "#completed-todo-#{todos.first_todo.id}") != []
+    end
+
+    test "Once We UnCheck a Todo , it moves to the Open Section", %{
+      conn: conn
+    } do
+      # Completed todos are those that are done , they have an id that has the prefix "completed-todo-"
+      todos = create_todos()
+      conn = get(conn, "/todos")
+      response = html_response(conn, 200)
 
       {:ok, parsed_html} = Floki.parse_document(response)
 
-      # in this case the first todo has the highest urgency
+      assert Floki.find(parsed_html, "#completed-todo-#{todos.third_todo.id}") != []
 
-      assert Floki.find(parsed_html, "#recommended-todo-#{todos.first_todo.id}") != []
-      assert Floki.find(parsed_html, "#recommended-todo-#{todos.second_todo.id}") == []
+      # we now uncheck a completed todo
+
+      conn = put(conn, ~p"/todos/#{todos.third_todo.id}/uncheck")
+
+      conn = get(conn, "/todos")
+      response = html_response(conn, 200)
+
+      {:ok, parsed_html} = Floki.parse_document(response)
+
+      refute Floki.find(parsed_html, "#completed-todo-#{todos.third_todo.id}") != []
+      assert Floki.find(parsed_html, "#open-todo-#{todos.third_todo.id}") != []
+    end
+
+    test "Once We Delete a Todo , we do not see it on the /todos page", %{
+      conn: conn
+    } do
+      # Open todos are those that are not done , they have an id that has the prefix "open-todo-"
+      todos = create_todos()
+      conn = get(conn, "/todos")
+      response = html_response(conn, 200)
+
+      assert response =~ todos.first_todo.title
+
+      conn = delete(conn, ~p"/todos/#{todos.first_todo.id}")
+      conn = get(conn, "/todos")
+      response = html_response(conn, 200)
+      refute response =~ todos.first_todo.title
     end
   end
 
